@@ -274,25 +274,60 @@ function BaziCalculator() {
                   </div>
 
                   {/* 职业推荐 */}
-                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Briefcase className="w-5 h-5 text-blue-600" />
-                      <h3 className="text-xl font-bold text-gray-800">职业推荐</h3>
+                  <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Briefcase className="w-5 h-5 text-green-600" />
+                      <h3 className="text-xl font-bold text-gray-800">职业发展建议</h3>
                     </div>
-                    
-                    <div className="text-gray-700 mb-4">
-                      {jobRecommendation.suggestion}
+
+                    {/* 日主五行描述 */}
+                    <div className="bg-green-50 rounded-lg p-4 mb-6 border border-green-200">
+                      <div className="text-lg font-semibold text-green-700 mb-2">
+                        日主五行: {jobRecommendation.selfElement}
+                      </div>
+                      <div className="text-sm text-gray-700 leading-relaxed">
+                        {jobRecommendation.selfElementDescription}
+                      </div>
                     </div>
-                    
-                    <div className="grid grid-cols-3 gap-3">
-                      {jobRecommendation.industries.map((industry, index) => (
-                        <div
-                          key={index}
-                          className="bg-white rounded-lg px-4 py-2 text-center text-sm font-medium text-gray-700 shadow-sm hover:shadow-md transition-shadow"
-                        >
-                          {industry}
-                        </div>
-                      ))}
+
+                    {/* 推荐行业领域 */}
+                    <div className="mb-6">
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        <h4 className="text-lg font-semibold text-gray-800">推荐行业领域</h4>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        {jobRecommendation.industries.map((industry, index) => (
+                          <button
+                            key={index}
+                            className="bg-green-100 hover:bg-green-200 rounded-lg px-4 py-3 text-center text-sm font-medium text-gray-800 shadow-sm hover:shadow-md transition-all"
+                          >
+                            {industry}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* 推荐职位类型 */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        <h4 className="text-lg font-semibold text-gray-800">推荐职位类型</h4>
+                      </div>
+                      <div className="grid grid-cols-4 gap-3">
+                        {jobRecommendation.positions.map((position, index) => (
+                          <button
+                            key={index}
+                            className="bg-gray-100 hover:bg-gray-200 rounded-lg px-4 py-3 text-center text-sm font-medium text-gray-800 shadow-sm hover:shadow-md transition-all"
+                          >
+                            {position}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </>

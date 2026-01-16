@@ -134,13 +134,31 @@ const ELEMENT_MAP: Record<string, ElementType> = {
   '壬': '水', '癸': '水', '亥': '水', '子': '水'
 }
 
-// 职业分类映射表（根据五行补弱原则）
+// 五行特性描述
+const ELEMENT_DESCRIPTION: Record<ElementType, string> = {
+  '木': '木主仁慈、生发、创造，适合需要创意、成长性和人文关怀的工作',
+  '火': '火主热情、活跃、传播，适合需要表达、创新和快速迭代的工作',
+  '土': '土主稳定、承载、包容，适合需要耐心、责任和实际执行的工作',
+  '金': '金主收敛、规则、严谨，适合需要逻辑、系统和精准控制的工作',
+  '水': '水主流动、智慧、适应，适合需要灵活、沟通和资源整合的工作'
+}
+
+// 行业领域分类（根据五行补弱原则）
 const INDUSTRY_MAP: Record<ElementType, string[]> = {
-  '木': ['艺术设计', '文化教育', '医疗养老', '环保园林', 'AI教育', 'AI文创', '医疗AI'],
-  '火': ['AI/互联网', '能源电力', '餐饮娱乐', '广告传媒', 'AI产品经理', 'AI Agent开发'],
-  '土': ['建筑房产', '土木工程', '农业畜牧', '仓储物流', '建筑AI', '智慧农业'],
-  '金': ['金融投资', '精密制造', '法律司法', '汽车五金', '软件架构', '底层系统设计'],
-  '水': ['国际贸易', '冷链物流', '航海旅游', '水利传播', '智慧水务', 'AI赋能传统贸易']
+  '木': ['教育培训', '文化出版', '园林绿化', '木材加工', '纺织服装', '医药健康'],
+  '火': ['互联网科技', '能源电力', '餐饮娱乐', '广告传媒', '演艺事业', '美容美发'],
+  '土': ['房地产', '建筑工程', '农业畜牧', '仓储物流', '石材加工', '防水材料'],
+  '金': ['金融投资', '精密制造', '法律司法', '汽车工业', '五金器材', '珠宝鉴定'],
+  '水': ['国际贸易', '冷链物流', '航海旅游', '水利工程', '传播媒体', '咨询服务']
+}
+
+// 职位类型分类
+const JOB_POSITION_MAP: Record<ElementType, string[]> = {
+  '木': ['教师', '设计师', '园艺师', '文案策划', '编辑', '咨询顾问', '中医师', '产品经理'],
+  '火': ['产品经理', '营销专员', '运营经理', '主播', '演员', '广告创意', '电气工程师', '网络工程师'],
+  '土': ['建筑工程师', '项目经理', '农业技术员', '物流管理', '质检员', '采购员', '房产销售', '土地评估'],
+  '金': ['金融分析师', '软件架构师', '律师', '机械工程师', '审计员', '质量管理', '系统分析师', '数据分析师'],
+  '水': ['贸易专员', '物流经理', '市场营销', '媒体编辑', '咨询顾问', '销售经理', '导游', '人力资源']
 }
 
 export interface FiveElementsScore {
@@ -154,6 +172,8 @@ export interface FiveElementsScore {
 export interface JobRecommendation {
   suggestion: string
   industries: string[]
+  positions: string[]
+  selfElementDescription: string
   scores: FiveElementsScore
   selfElement: ElementType
   bodyStrength: '身强' | '身弱'
@@ -217,7 +237,10 @@ export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
   const strongestElement = sortedScores[sortedScores.length - 1][0] as ElementType
 
   // 职业逻辑：通常倾向于平衡，所以推荐"用神"（最弱的五行）
-  const recommendedJobs = INDUSTRY_MAP[weakestElement] || []
+  // 但显示日主五行的特性描述
+  const recommendedIndustries = INDUSTRY_MAP[weakestElement] || []
+  const recommendedPositions = JOB_POSITION_MAP[weakestElement] || []
+  const selfElementDescription = ELEMENT_DESCRIPTION[selfElement] || ''
 
   return {
     scores,
@@ -226,8 +249,10 @@ export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
     selfScore,
     strongestElement,
     weakestElement,
+    selfElementDescription,
     suggestion: `您的日主为${bazi.day.tianGan}（${selfElement}），得分为${selfScore}分，属于${bodyStrength}。目前排盘中能量最强的是${strongestElement}（${scores[strongestElement]}分），最需要补益的是${weakestElement}（${scores[weakestElement]}分）。`,
-    industries: recommendedJobs
+    industries: recommendedIndustries,
+    positions: recommendedPositions
   }
 }
 
