@@ -50,11 +50,9 @@ function BaziCalculator() {
     
     const [year, month, day] = date.split('-')
     const [hour, minute] = time.split(':')
-    const hourNum = parseInt(hour)
-    const ampm = hourNum >= 12 ? 'PM' : 'AM'
-    const displayHour = hourNum % 12 || 12
     
-    return `${month}/${day}/${year} ${displayHour}:${minute} ${ampm}`
+    // 格式：2000/04/16 17:25（24小时制）
+    return `${year}/${month}/${day} ${hour}:${minute}`
   }
 
   const getCurrentDate = () => {
