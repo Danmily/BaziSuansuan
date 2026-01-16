@@ -34,12 +34,12 @@ const YEAR_REMAINDER_TO_DI_ZHI: { [key: number]: string } = {
   11: '未'
 }
 
-// 月份对应的地支（1-12月）
-// 注意：八字中的月份是按节气划分的，但这里简化处理
+// 月份对应的地支（1-12月，固定不变）
 // 1月=寅，2月=卯，3月=辰，4月=巳，5月=午，6月=未
 // 7月=申，8月=酉，9月=戌，10月=亥，11月=子，12月=丑
+// 注意：八字中的月份是按节气划分的，这里简化处理，直接对应公历月份
 const MONTH_TO_DI_ZHI: { [key: number]: string } = {
-  1: '寅',   // 一月
+  1: '寅',   // 一月（正月）
   2: '卯',   // 二月
   3: '辰',   // 三月
   4: '巳',   // 四月
@@ -175,69 +175,66 @@ export function calculateDayPillar(year: number, month: number, day: number): { 
  * @returns 时柱的天干和地支
  */
 export function calculateHourPillar(dayGan: string, hour: number): { tianGan: string; diZhi: string } {
-  // 时辰对应表（将24小时制转换为12时辰）
-  const hourToShiChen: { [key: number]: { zhi: string; startHour: number } } = {
-    0: { zhi: '子', startHour: 23 },  // 23:00-00:59
-    1: { zhi: '丑', startHour: 1 },   // 01:00-02:59
-    2: { zhi: '寅', startHour: 3 },   // 03:00-04:59
-    3: { zhi: '卯', startHour: 5 },   // 05:00-06:59
-    4: { zhi: '辰', startHour: 7 },   // 07:00-08:59
-    5: { zhi: '巳', startHour: 9 },    // 09:00-10:59
-    6: { zhi: '午', startHour: 11 },  // 11:00-12:59
-    7: { zhi: '未', startHour: 13 },  // 13:00-14:59
-    8: { zhi: '申', startHour: 15 },  // 15:00-16:59
-    9: { zhi: '酉', startHour: 17 },  // 17:00-18:59
-    10: { zhi: '戌', startHour: 19 }, // 19:00-20:59
-    11: { zhi: '亥', startHour: 21 }  // 21:00-22:59
-  }
-
-  // 确定时辰
+  // 十二时辰的地支固定不变
+  // 23-1: 子时，1-3: 丑时，3-5: 寅时，5-7: 卯时，7-9: 辰时，9-11: 巳时
+  // 11-13: 午时，13-15: 未时，15-17: 申时，17-19: 酉时，19-21: 戌时，21-23: 亥时
+  
+  // 确定时辰索引（从子时开始，索引0）
   let shiChenIndex = 0
   if (hour >= 23 || hour < 1) {
-    shiChenIndex = 0  // 子时
+    shiChenIndex = 0  // 子时 (23-1)
   } else if (hour >= 1 && hour < 3) {
-    shiChenIndex = 1  // 丑时
+    shiChenIndex = 1  // 丑时 (1-3)
   } else if (hour >= 3 && hour < 5) {
-    shiChenIndex = 2  // 寅时
+    shiChenIndex = 2  // 寅时 (3-5)
   } else if (hour >= 5 && hour < 7) {
-    shiChenIndex = 3  // 卯时
+    shiChenIndex = 3  // 卯时 (5-7)
   } else if (hour >= 7 && hour < 9) {
-    shiChenIndex = 4  // 辰时
+    shiChenIndex = 4  // 辰时 (7-9)
   } else if (hour >= 9 && hour < 11) {
-    shiChenIndex = 5  // 巳时
+    shiChenIndex = 5  // 巳时 (9-11)
   } else if (hour >= 11 && hour < 13) {
-    shiChenIndex = 6  // 午时
+    shiChenIndex = 6  // 午时 (11-13)
   } else if (hour >= 13 && hour < 15) {
-    shiChenIndex = 7  // 未时
+    shiChenIndex = 7  // 未时 (13-15)
   } else if (hour >= 15 && hour < 17) {
-    shiChenIndex = 8  // 申时
+    shiChenIndex = 8  // 申时 (15-17)
   } else if (hour >= 17 && hour < 19) {
-    shiChenIndex = 9  // 酉时
+    shiChenIndex = 9  // 酉时 (17-19)
   } else if (hour >= 19 && hour < 21) {
-    shiChenIndex = 10 // 戌时
+    shiChenIndex = 10 // 戌时 (19-21)
   } else {
-    shiChenIndex = 11 // 亥时
+    shiChenIndex = 11 // 亥时 (21-23)
   }
 
-  const diZhi = hourToShiChen[shiChenIndex].zhi
+  // 获取对应的地支
+  const diZhi = DI_ZHI[shiChenIndex]
 
   // 日上起时法（五鼠遁）：根据日干确定子时的天干
-  // 甲己还加甲，乙庚丙作初，丙辛从戊起，丁壬庚子居，戊癸何方发，壬子是真途
+  // 甲、己日，从甲子时开始
+  // 乙、庚日，从丙子时开始
+  // 丙、辛日，从戊子时开始
+  // 丁、壬日，从庚子时开始
+  // 戊、癸日，从壬子时开始
   const dayGanToHourGanStart: { [key: string]: string } = {
-    '甲': '甲',
-    '己': '甲',
-    '乙': '丙',
-    '庚': '丙',
-    '丙': '戊',
-    '辛': '戊',
-    '丁': '庚',
-    '壬': '庚',
-    '戊': '壬',
-    '癸': '壬'
+    '甲': '甲',  // 甲日，子时起甲
+    '己': '甲',  // 己日，子时起甲
+    '乙': '丙',  // 乙日，子时起丙
+    '庚': '丙',  // 庚日，子时起丙
+    '丙': '戊',  // 丙日，子时起戊
+    '辛': '戊',  // 辛日，子时起戊
+    '丁': '庚',  // 丁日，子时起庚
+    '壬': '庚',  // 壬日，子时起庚
+    '戊': '壬',  // 戊日，子时起壬
+    '癸': '壬'   // 癸日，子时起壬
   }
 
+  // 根据日干确定子时的天干
   const firstHourGan = dayGanToHourGanStart[dayGan]
   const firstHourGanIndex = TIAN_GAN.indexOf(firstHourGan)
+  
+  // 从子时开始，天干依次顺排
+  // 子时（索引0）= 偏移0，丑时（索引1）= 偏移1，寅时（索引2）= 偏移2...
   const hourGanIndex = (firstHourGanIndex + shiChenIndex) % 10
   const tianGan = TIAN_GAN[hourGanIndex]
 
