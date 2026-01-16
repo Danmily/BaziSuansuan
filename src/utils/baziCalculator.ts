@@ -115,31 +115,22 @@ export function calculateMonthPillar(year: number, month: number): { tianGan: st
   const yearPillar = calculateYearPillar(year)
   const yearGan = yearPillar.tianGan
 
-  // 获取月份对应的地支
-  // 注意：如果4月应该是辰，需要修正月份对应关系
-  let diZhi = MONTH_TO_DI_ZHI[month]
-  
-  // 特殊处理：如果月份是4月，地支应该是辰（不是巳）
-  if (month === 4) {
-    diZhi = '辰'
-  }
+  // 获取月份对应的地支（固定不变）
+  // 1月=寅，2月=卯，3月=辰，4月=巳，5月=午，6月=未
+  // 7月=申，8月=酉，9月=戌，10月=亥，11月=子，12月=丑
+  const diZhi = MONTH_TO_DI_ZHI[month]
 
-  // 根据年干确定正月（寅月）的天干
+  // 根据年干确定正月（寅月）的天干（五虎遁）
   const firstMonthGan = YEAR_GAN_TO_MONTH_GAN_START[yearGan]
 
   // 找到正月天干在天干数组中的位置
   const firstMonthGanIndex = TIAN_GAN.indexOf(firstMonthGan)
 
   // 计算当前月份的天干
-  // 需要根据月份对应的地支在地支数组中的位置来计算偏移
-  // 地支数组：['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥']
-  // 寅=索引2，卯=索引3，辰=索引4，巳=索引5...
-  const diZhiIndex = DI_ZHI.indexOf(diZhi)
-  
-  // 从寅月（索引2）开始计算偏移
-  // 如果当前月份的地支索引是2（寅），偏移是0
-  // 如果当前月份的地支索引是4（辰），偏移是2
-  const monthOffset = (diZhiIndex - 2 + 12) % 12  // +12确保是正数
+  // 按照五虎遁规则：从正月（寅月，month=1）开始，天干依次顺排
+  // 1月（寅）= 偏移0，2月（卯）= 偏移1，3月（辰）= 偏移2，4月（巳）= 偏移3...
+  // 所以偏移量就是 (month - 1)
+  const monthOffset = month - 1
   
   const monthGanIndex = (firstMonthGanIndex + monthOffset) % 10
   const tianGan = TIAN_GAN[monthGanIndex]
