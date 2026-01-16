@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Calendar, Clock, Sparkles } from 'lucide-react'
-import { calculateBazi, type BaziResult } from '../utils/baziCalculator'
+import { Calendar, Clock, Sparkles, Briefcase } from 'lucide-react'
+import { calculateBazi, type BaziResult, getRecommendedJobs, type JobRecommendation } from '../utils/baziCalculator'
 import DateTimePicker from './DateTimePicker'
 
 function BaziCalculator() {
@@ -9,6 +9,7 @@ function BaziCalculator() {
     birthDateTime: ''
   })
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null)
+  const [jobRecommendation, setJobRecommendation] = useState<JobRecommendation | null>(null)
   const [isPickerOpen, setIsPickerOpen] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -27,6 +28,14 @@ function BaziCalculator() {
 
     const result = calculateBazi(date, time)
     setBaziResult(result)
+    
+    // 计算职业推荐
+    if (result) {
+      const recommendation = getRecommendedJobs(result)
+      setJobRecommendation(recommendation)
+    } else {
+      setJobRecommendation(null)
+    }
   }
 
   const handleChange = (field: string, value: string) => {
@@ -203,7 +212,7 @@ function BaziCalculator() {
               </div>
 
               {/* 完整八字显示 */}
-              <div className="bg-gray-50 rounded-lg p-4 text-center">
+              <div className="bg-gray-50 rounded-lg p-4 text-center mb-6">
                 <div className="text-lg text-gray-700 mb-2">完整八字</div>
                 <div className="text-2xl font-bold text-gray-800">
                   {baziResult.year.tianGan}{baziResult.year.diZhi} · 
@@ -212,6 +221,31 @@ function BaziCalculator() {
                   {baziResult.hour.tianGan}{baziResult.hour.diZhi}
                 </div>
               </div>
+
+              {/* 职业推荐 */}
+              {jobRecommendation && (
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Briefcase className="w-5 h-5 text-blue-600" />
+                    <h3 className="text-xl font-bold text-gray-800">职业推荐</h3>
+                  </div>
+                  
+                  <div className="text-gray-700 mb-4">
+                    {jobRecommendation.suggestion}
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-3">
+                    {jobRecommendation.industries.map((industry, index) => (
+                      <div
+                        key={index}
+                        className="bg-white rounded-lg px-4 py-2 text-center text-sm font-medium text-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        {industry}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

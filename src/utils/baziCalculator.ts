@@ -122,3 +122,57 @@ function calculateHourPillarImproved(dayGan: string, hour: number): { tianGan: s
 
   return { tianGan, diZhi }
 }
+
+// 职业分类映射表
+const INDUSTRY_MAP = {
+  '木': ['林业', '木材', '造纸', '家具', '教育', '出版', '医疗', '布艺', '园林'],
+  '火': ['互联网', '电子', '电力', '能源', '餐饮', '演艺', '广告', '美容', '化工'],
+  '土': ['房地产', '建筑', '土木', '农牧', '石材', '仓储', '防水', '典当', '矿产'],
+  '金': ['金融', '五金', '机械', '珠宝', '汽车', '武职', '法律', '鉴定', '采矿'],
+  '水': ['物流', '水利', '水产', '旅游', '贸易', '传播', '洗浴', '冷冻', '侦察']
+}
+
+export interface JobRecommendation {
+  suggestion: string
+  industries: string[]
+}
+
+/**
+ * 职业推断逻辑函数
+ * 根据日主五行推荐适合的职业
+ */
+export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
+  // 1. 获取日主（日柱天干），代表用户自己
+  const dayGan = bazi.day.tianGan
+  
+  // 2. 统计地支中出现最多的五行（实际开发建议计算五行得分）
+  const elements = [
+    bazi.year.diZhi, 
+    bazi.month.diZhi, 
+    bazi.day.diZhi, 
+    bazi.hour.diZhi
+  ].map(getFiveElement)
+  
+  // 3. 获取日主的五行属性
+  const selfElement = getFiveElement(dayGan)
+  
+  // 4. 返回建议
+  const industries = INDUSTRY_MAP[selfElement as keyof typeof INDUSTRY_MAP] || []
+  
+  return {
+    suggestion: `您的日主为${dayGan}（${selfElement}），建议选择与"${selfElement}"相关的职业。`,
+    industries
+  }
+}
+
+/**
+ * 辅助函数：干支转五行
+ */
+function getFiveElement(name: string): string {
+  if ('甲乙寅卯'.includes(name)) return '木'
+  if ('丙丁巳午'.includes(name)) return '火'
+  if ('戊己辰戌丑未'.includes(name)) return '土'
+  if ('庚辛申酉'.includes(name)) return '金'
+  if ('壬癸亥子'.includes(name)) return '水'
+  return '未知'
+}
