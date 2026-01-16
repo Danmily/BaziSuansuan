@@ -276,13 +276,13 @@ function BaziCalculator() {
                   {/* 职业推荐 */}
                   <div className="bg-white rounded-lg p-6 border border-gray-200 shadow-sm">
                     <div className="flex items-center gap-2 mb-6">
-                      <Briefcase className="w-5 h-5 text-green-600" />
+                      <Briefcase className={`w-5 h-5 ${jobRecommendation.elementColors.text}`} />
                       <h3 className="text-xl font-bold text-gray-800">职业发展建议</h3>
                     </div>
 
                     {/* 日主五行描述 */}
-                    <div className="bg-green-50 rounded-lg p-4 mb-6 border border-green-200">
-                      <div className="text-lg font-semibold text-green-700 mb-2">
+                    <div className={`${jobRecommendation.elementColors.bgLight} rounded-lg p-4 mb-6 border ${jobRecommendation.elementColors.border}`}>
+                      <div className={`text-lg font-semibold ${jobRecommendation.elementColors.textDark} mb-2`}>
                         日主五行: {jobRecommendation.selfElement}
                       </div>
                       <div className="text-sm text-gray-700 leading-relaxed">
@@ -293,7 +293,7 @@ function BaziCalculator() {
                     {/* 推荐行业领域 */}
                     <div className="mb-6">
                       <div className="flex items-center gap-2 mb-3">
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className={`w-5 h-5 ${jobRecommendation.elementColors.text}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                         <h4 className="text-lg font-semibold text-gray-800">推荐行业领域</h4>
@@ -302,7 +302,7 @@ function BaziCalculator() {
                         {jobRecommendation.industries.map((industry, index) => (
                           <button
                             key={index}
-                            className="bg-green-100 hover:bg-green-200 rounded-lg px-4 py-3 text-center text-sm font-medium text-gray-800 shadow-sm hover:shadow-md transition-all"
+                            className={`${jobRecommendation.elementColors.bgButton} ${jobRecommendation.elementColors.hover} rounded-lg px-4 py-3 text-center text-sm font-medium text-gray-800 shadow-sm hover:shadow-md transition-all`}
                           >
                             {industry}
                           </button>

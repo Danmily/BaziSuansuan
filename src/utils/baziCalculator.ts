@@ -143,6 +143,63 @@ const ELEMENT_DESCRIPTION: Record<ElementType, string> = {
   '水': '水主流动、智慧、适应，适合需要灵活、沟通和资源整合的工作'
 }
 
+// 五行颜色映射
+export const ELEMENT_COLORS: Record<ElementType, {
+  bg: string
+  bgLight: string
+  bgButton: string
+  border: string
+  text: string
+  textDark: string
+  hover: string
+}> = {
+  '木': {
+    bg: 'bg-green-500',
+    bgLight: 'bg-green-50',
+    bgButton: 'bg-green-100',
+    border: 'border-green-200',
+    text: 'text-green-600',
+    textDark: 'text-green-700',
+    hover: 'hover:bg-green-200'
+  },
+  '火': {
+    bg: 'bg-red-500',
+    bgLight: 'bg-red-50',
+    bgButton: 'bg-red-100',
+    border: 'border-red-200',
+    text: 'text-red-600',
+    textDark: 'text-red-700',
+    hover: 'hover:bg-red-200'
+  },
+  '土': {
+    bg: 'bg-amber-600',
+    bgLight: 'bg-amber-50',
+    bgButton: 'bg-amber-100',
+    border: 'border-amber-200',
+    text: 'text-amber-600',
+    textDark: 'text-amber-700',
+    hover: 'hover:bg-amber-200'
+  },
+  '金': {
+    bg: 'bg-yellow-500',
+    bgLight: 'bg-yellow-50',
+    bgButton: 'bg-yellow-100',
+    border: 'border-yellow-200',
+    text: 'text-yellow-600',
+    textDark: 'text-yellow-700',
+    hover: 'hover:bg-yellow-200'
+  },
+  '水': {
+    bg: 'bg-blue-500',
+    bgLight: 'bg-blue-50',
+    bgButton: 'bg-blue-100',
+    border: 'border-blue-200',
+    text: 'text-blue-600',
+    textDark: 'text-blue-700',
+    hover: 'hover:bg-blue-200'
+  }
+}
+
 // 行业领域分类（根据五行补弱原则）
 const INDUSTRY_MAP: Record<ElementType, string[]> = {
   '木': ['教育培训', '文化出版', '园林绿化', '木材加工', '纺织服装', '医药健康'],
@@ -180,6 +237,7 @@ export interface JobRecommendation {
   selfScore: number
   strongestElement: ElementType
   weakestElement: ElementType
+  elementColors: typeof ELEMENT_COLORS[ElementType]
 }
 
 /**
@@ -250,6 +308,7 @@ export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
     strongestElement,
     weakestElement,
     selfElementDescription,
+    elementColors: ELEMENT_COLORS[selfElement],
     suggestion: `您的日主为${bazi.day.tianGan}（${selfElement}），得分为${selfScore}分，属于${bodyStrength}。目前排盘中能量最强的是${strongestElement}（${scores[strongestElement]}分），最需要补益的是${weakestElement}（${scores[weakestElement]}分）。`,
     industries: recommendedIndustries,
     positions: recommendedPositions
