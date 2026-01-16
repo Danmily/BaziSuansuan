@@ -1,14 +1,9 @@
 import { useState } from 'react'
-import { Calendar, Clock, Sparkles, Briefcase } from 'lucide-react'
-import { calculateBazi, type BaziResult, getRecommendedJobs, type JobRecommendation, ELEMENT_MAP, ELEMENT_COLORS } from '../utils/baziCalculator'
+import { Calendar, Clock, Sparkles } from 'lucide-react'
+import { calculateBazi, type BaziResult, getRecommendedJobs, type JobRecommendation } from '../utils/baziCalculator'
+import { calculateLifeKline, type LifeKlineResult } from '../utils/lifeklineCalculator'
 import DateTimePicker from './DateTimePicker'
-
-// 获取天干地支对应的颜色类名
-const getElementColor = (ganZhi: string): string => {
-  const element = ELEMENT_MAP[ganZhi]
-  if (!element) return 'text-gray-600'
-  return ELEMENT_COLORS[element].textDark
-}
+import BaziResultLayout from './BaziResultLayout'
 
 function BaziCalculator() {
   const [formData, setFormData] = useState({
@@ -17,7 +12,9 @@ function BaziCalculator() {
   })
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null)
   const [jobRecommendation, setJobRecommendation] = useState<JobRecommendation | null>(null)
+  const [lifeKline, setLifeKline] = useState<LifeKlineResult | null>(null)
   const [isPickerOpen, setIsPickerOpen] = useState(false)
+  const [showResult, setShowResult] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,8 +37,17 @@ function BaziCalculator() {
     if (result) {
       const recommendation = getRecommendedJobs(result)
       setJobRecommendation(recommendation)
+      
+      // 计算人生K线
+      const [year] = date.split('-').map(Number)
+      const klineData = calculateLifeKline(result, year, formData.gender as '男' | '女')
+      setLifeKline(klineData)
+      
+      // 切换到结果页面
+      setShowResult(true)
     } else {
       setJobRecommendation(null)
+      setLifeKline(null)
     }
   }
 
@@ -83,6 +89,20 @@ function BaziCalculator() {
     return time || ''
   }
 
+  // 如果已显示结果，切换到结果布局
+  if (showResult && baziResult && jobRecommendation && lifeKline) {
+    return (
+      <BaziResultLayout
+        baziResult={baziResult}
+        jobRecommendation={jobRecommendation}
+        lifeKline={lifeKline}
+        birthDateTime={formData.birthDateTime}
+        gender={formData.gender as '男' | '女'}
+      />
+    )
+  }
+
+  // 否则显示输入表单
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
@@ -158,8 +178,8 @@ function BaziCalculator() {
             </button>
           </form>
 
-          {/* 八字排盘结果显示 */}
-          {baziResult && (
+          {/* 临时结果显示（在新布局之前） */}
+          {baziResult && !showResult && (
             <div className="mt-8 pt-8 border-t border-gray-200">
               <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">八字排盘结果</h2>
               

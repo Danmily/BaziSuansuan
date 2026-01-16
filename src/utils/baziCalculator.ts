@@ -134,6 +134,24 @@ export const ELEMENT_MAP: Record<string, ElementType> = {
   '壬': '水', '癸': '水', '亥': '水', '子': '水'
 }
 
+// 命格名称映射
+const MING_GE_NAMES: Record<ElementType, string> = {
+  '木': '「草木生机」',
+  '火': '「烈火真金」',
+  '土': '「厚德载物」',
+  '金': '「刀剑金石」',
+  '水': '「江河湖海」'
+}
+
+// 命格性格描述
+const MING_GE_DESCRIPTIONS: Record<ElementType, string> = {
+  '木': '仁慈温和,有创造力,具有人文关怀',
+  '火': '热情活跃,果断刚毅,具有领袖气质',
+  '土': '稳重踏实,包容大度,具有责任心',
+  '金': '果断刚毅,重情重义,有侠客风范',
+  '水': '智慧灵活,适应力强,具有变通性'
+}
+
 // 职业发展数据库
 const VOCATIONAL_DATABASE: Record<ElementType, {
   characteristics: string
@@ -205,13 +223,13 @@ export const ELEMENT_COLORS: Record<ElementType, {
     hover: 'hover:bg-amber-200'
   },
   '金': {
-    bg: 'bg-yellow-500',
+    bg: 'bg-yellow-400',
     bgLight: 'bg-yellow-50',
-    bgButton: 'bg-yellow-100',
-    border: 'border-yellow-200',
-    text: 'text-yellow-600',
-    textDark: 'text-yellow-700',
-    hover: 'hover:bg-yellow-200'
+    bgButton: 'bg-yellow-200',
+    border: 'border-yellow-300',
+    text: 'text-yellow-500',
+    textDark: 'text-yellow-600',
+    hover: 'hover:bg-yellow-300'
   },
   '水': {
     bg: 'bg-blue-500',
@@ -233,6 +251,14 @@ export interface FiveElementsScore {
   水: number
 }
 
+export interface MingGeInfo {
+  name: string // 命格名称，如「刀剑金石」
+  description: string // 命格描述
+  favorableGods: string[] // 喜用神
+  unfavorableGods: string[] // 忌神
+  advice: string // 命格建议
+}
+
 export interface JobRecommendation {
   suggestion: string
   industries: string[]
@@ -245,6 +271,7 @@ export interface JobRecommendation {
   strongestElement: ElementType
   weakestElement: ElementType
   elementColors: typeof ELEMENT_COLORS[ElementType]
+  mingGe: MingGeInfo
 }
 
 /**
@@ -284,6 +311,45 @@ export function calculateFiveElementsScore(bazi: BaziResult): FiveElementsScore 
 }
 
 /**
+ * 计算喜用神和忌神
+ */
+function calculateGods(selfElement: ElementType, bodyStrength: '身强' | '身弱', scores: FiveElementsScore): {
+  favorableGods: string[]
+  unfavorableGods: string[]
+} {
+  // 五行相克关系：木克土，火克金，土克水，金克木，水克火
+  // 五行相生关系：木生火，火生土，土生金，金生水，水生木
+  
+  const elementOrder: ElementType[] = ['木', '火', '土', '金', '水']
+  const selfIndex = elementOrder.indexOf(selfElement)
+  
+  // 财星：我克的（下下一位）
+  const wealthStar = elementOrder[(selfIndex + 2) % 5]
+  // 官杀：克我的（上上一位）
+  const officerStar = elementOrder[(selfIndex - 2 + 5) % 5]
+  // 印星：生我的（上一位）
+  const resourceStar = elementOrder[(selfIndex - 1 + 5) % 5]
+  // 比劫：同我的（相同）
+  const friendStar = selfElement
+  // 食伤：我生的（下一位）
+  const foodStar = elementOrder[(selfIndex + 1) % 5]
+  
+  if (bodyStrength === '身强') {
+    // 身强：喜用神是克、泄、耗日主的（财星、官杀、食伤），忌神是生、助日主的（印星、比劫）
+    return {
+      favorableGods: ['财星', '官杀'],
+      unfavorableGods: ['印星', '比劫']
+    }
+  } else {
+    // 身弱：喜用神是生、助日主的（印星、比劫），忌神是克、泄、耗日主的（财星、官杀）
+    return {
+      favorableGods: ['印星', '比劫'],
+      unfavorableGods: ['财星', '官杀']
+    }
+  }
+}
+
+/**
  * 根据得分判断身强身弱和职业建议
  */
 export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
@@ -297,9 +363,18 @@ export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
   // 找出得分最低的五行（通常作为补救的参考）
   const sortedScores = Object.entries(scores).sort((a, b) => a[1] - b[1])
   const weakestElement = sortedScores[0][0] as ElementType
+  const weakElements: string[] = []
+  sortedScores.forEach(([element, score]) => {
+    if (score < 20) {
+      weakElements.push(ELEMENT_MAP[element as any] || element)
+    }
+  })
 
   // 找出得分最高的五行（代表能量最强）
   const strongestElement = sortedScores[sortedScores.length - 1][0] as ElementType
+
+  // 计算喜用神和忌神
+  const gods = calculateGods(selfElement, bodyStrength, scores)
 
   // 根据日主五行获取对应的职业发展建议
   const vocationalData = VOCATIONAL_DATABASE[selfElement] || {
@@ -312,6 +387,19 @@ export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
   const recommendedPositions = vocationalData.positions || []
   const selfElementDescription = vocationalData.characteristics || ''
 
+  // 生成命格信息
+  const mingGeText = `${selfElement}命・${bodyStrength}・${strongestElement}旺${weakElements.length > 0 ? `・缺${weakElements.join('')}` : ''}`
+  
+  const mingGe: MingGeInfo = {
+    name: MING_GE_NAMES[selfElement],
+    description: mingGeText,
+    favorableGods: gods.favorableGods,
+    unfavorableGods: gods.unfavorableGods,
+    advice: bodyStrength === '身强' 
+      ? '适合独立创业、领导岗位,但要注意控制脾气,学会倾听'
+      : '适合团队合作、辅助岗位,需要增强自信,培养独立性'
+  }
+
   return {
     scores,
     selfElement,
@@ -323,7 +411,8 @@ export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
     elementColors: ELEMENT_COLORS[selfElement],
     suggestion: `您的日主为${bazi.day.tianGan}（${selfElement}），得分为${selfScore}分，属于${bodyStrength}。目前排盘中能量最强的是${strongestElement}（${scores[strongestElement]}分），最需要补益的是${weakestElement}（${scores[weakestElement]}分）。`,
     industries: recommendedIndustries,
-    positions: recommendedPositions
+    positions: recommendedPositions,
+    mingGe
   }
 }
 
