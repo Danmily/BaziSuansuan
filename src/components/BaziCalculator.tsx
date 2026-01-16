@@ -222,29 +222,80 @@ function BaziCalculator() {
                 </div>
               </div>
 
-              {/* 职业推荐 */}
+              {/* 身强身弱和五行得分 */}
               {jobRecommendation && (
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Briefcase className="w-5 h-5 text-blue-600" />
-                    <h3 className="text-xl font-bold text-gray-800">职业推荐</h3>
-                  </div>
-                  
-                  <div className="text-gray-700 mb-4">
-                    {jobRecommendation.suggestion}
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-3">
-                    {jobRecommendation.industries.map((industry, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-lg px-4 py-2 text-center text-sm font-medium text-gray-700 shadow-sm hover:shadow-md transition-shadow"
-                      >
-                        {industry}
+                <>
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-lg p-6 border border-purple-100 mb-6">
+                    <h3 className="text-xl font-bold text-gray-800 mb-4 text-center">身强身弱分析</h3>
+                    
+                    <div className="flex items-center justify-center gap-4 mb-4">
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 mb-1">日主五行</div>
+                        <div className="text-2xl font-bold text-purple-600">{jobRecommendation.selfElement}</div>
                       </div>
-                    ))}
+                      <div className="text-gray-400">|</div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 mb-1">日主得分</div>
+                        <div className="text-2xl font-bold text-purple-600">{jobRecommendation.selfScore}分</div>
+                      </div>
+                      <div className="text-gray-400">|</div>
+                      <div className="text-center">
+                        <div className="text-sm text-gray-600 mb-1">身强身弱</div>
+                        <div className={`text-2xl font-bold ${jobRecommendation.bodyStrength === '身强' ? 'text-red-600' : 'text-blue-600'}`}>
+                          {jobRecommendation.bodyStrength}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 五行得分详情 */}
+                    <div className="grid grid-cols-5 gap-3 mt-4">
+                      {(['木', '火', '土', '金', '水'] as const).map((element) => {
+                        const score = jobRecommendation.scores[element]
+                        const isSelf = element === jobRecommendation.selfElement
+                        const isStrongest = element === jobRecommendation.strongestElement
+                        const isWeakest = element === jobRecommendation.weakestElement
+                        
+                        return (
+                          <div
+                            key={element}
+                            className={`bg-white rounded-lg p-3 text-center ${
+                              isSelf ? 'ring-2 ring-purple-500' : ''
+                            } ${isStrongest ? 'ring-2 ring-green-500' : ''} ${isWeakest ? 'ring-2 ring-orange-500' : ''}`}
+                          >
+                            <div className="text-sm font-medium text-gray-700 mb-1">{element}</div>
+                            <div className="text-lg font-bold text-gray-800">{score}分</div>
+                            {isSelf && <div className="text-xs text-purple-600 mt-1">日主</div>}
+                            {isStrongest && <div className="text-xs text-green-600 mt-1">最强</div>}
+                            {isWeakest && <div className="text-xs text-orange-600 mt-1">最弱</div>}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
+
+                  {/* 职业推荐 */}
+                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Briefcase className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-xl font-bold text-gray-800">职业推荐</h3>
+                    </div>
+                    
+                    <div className="text-gray-700 mb-4">
+                      {jobRecommendation.suggestion}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-3">
+                      {jobRecommendation.industries.map((industry, index) => (
+                        <div
+                          key={index}
+                          className="bg-white rounded-lg px-4 py-2 text-center text-sm font-medium text-gray-700 shadow-sm hover:shadow-md transition-shadow"
+                        >
+                          {industry}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </>
               )}
             </div>
           )}

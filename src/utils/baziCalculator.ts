@@ -123,56 +123,117 @@ function calculateHourPillarImproved(dayGan: string, hour: number): { tianGan: s
   return { tianGan, diZhi }
 }
 
-// 职业分类映射表
-const INDUSTRY_MAP = {
-  '木': ['林业', '木材', '造纸', '家具', '教育', '出版', '医疗', '布艺', '园林'],
-  '火': ['互联网', '电子', '电力', '能源', '餐饮', '演艺', '广告', '美容', '化工'],
-  '土': ['房地产', '建筑', '土木', '农牧', '石材', '仓储', '防水', '典当', '矿产'],
-  '金': ['金融', '五金', '机械', '珠宝', '汽车', '武职', '法律', '鉴定', '采矿'],
-  '水': ['物流', '水利', '水产', '旅游', '贸易', '传播', '洗浴', '冷冻', '侦察']
+// 干支与五行的对应表
+type ElementType = '木' | '火' | '土' | '金' | '水'
+
+const ELEMENT_MAP: Record<string, ElementType> = {
+  '甲': '木', '乙': '木', '寅': '木', '卯': '木',
+  '丙': '火', '丁': '火', '巳': '火', '午': '火',
+  '戊': '土', '己': '土', '辰': '土', '戌': '土', '丑': '土', '未': '土',
+  '庚': '金', '辛': '金', '申': '金', '酉': '金',
+  '壬': '水', '癸': '水', '亥': '水', '子': '水'
+}
+
+// 职业分类映射表（根据五行补弱原则）
+const INDUSTRY_MAP: Record<ElementType, string[]> = {
+  '木': ['艺术设计', '文化教育', '医疗养老', '环保园林', 'AI教育', 'AI文创', '医疗AI'],
+  '火': ['AI/互联网', '能源电力', '餐饮娱乐', '广告传媒', 'AI产品经理', 'AI Agent开发'],
+  '土': ['建筑房产', '土木工程', '农业畜牧', '仓储物流', '建筑AI', '智慧农业'],
+  '金': ['金融投资', '精密制造', '法律司法', '汽车五金', '软件架构', '底层系统设计'],
+  '水': ['国际贸易', '冷链物流', '航海旅游', '水利传播', '智慧水务', 'AI赋能传统贸易']
+}
+
+export interface FiveElementsScore {
+  木: number
+  火: number
+  土: number
+  金: number
+  水: number
 }
 
 export interface JobRecommendation {
   suggestion: string
   industries: string[]
+  scores: FiveElementsScore
+  selfElement: ElementType
+  bodyStrength: '身强' | '身弱'
+  selfScore: number
+  strongestElement: ElementType
+  weakestElement: ElementType
 }
 
 /**
- * 职业推断逻辑函数
- * 根据日主五行推荐适合的职业
+ * 五行得分计算器
+ * 根据权重（8, 4, 12, 40, 12, 12, 12）进行加权求和
+ */
+export function calculateFiveElementsScore(bazi: BaziResult): FiveElementsScore {
+  // 初始化得分
+  const scores: FiveElementsScore = {
+    '木': 0,
+    '火': 0,
+    '土': 0,
+    '金': 0,
+    '水': 0
+  }
+
+  // 定义权重配置 (按照提供的权重)
+  const weights = [
+    { key: bazi.year.tianGan, weight: 8 },   // 年干
+    { key: bazi.year.diZhi, weight: 4 },    // 年支
+    { key: bazi.month.tianGan, weight: 12 }, // 月干
+    { key: bazi.month.diZhi, weight: 40 },   // 月支 (月令)
+    { key: bazi.day.diZhi, weight: 12 },    // 日支
+    { key: bazi.hour.tianGan, weight: 12 },  // 时干
+    { key: bazi.hour.diZhi, weight: 12 }     // 时支
+  ]
+
+  // 累加得分
+  weights.forEach(item => {
+    const element = ELEMENT_MAP[item.key]
+    if (element) {
+      scores[element] += item.weight
+    }
+  })
+
+  return scores
+}
+
+/**
+ * 根据得分判断身强身弱和职业建议
  */
 export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
-  // 1. 获取日主（日柱天干），代表用户自己
-  const dayGan = bazi.day.tianGan
-  
-  // 2. 统计地支中出现最多的五行（实际开发建议计算五行得分）
-  const elements = [
-    bazi.year.diZhi, 
-    bazi.month.diZhi, 
-    bazi.day.diZhi, 
-    bazi.hour.diZhi
-  ].map(getFiveElement)
-  
-  // 3. 获取日主的五行属性
-  const selfElement = getFiveElement(dayGan)
-  
-  // 4. 返回建议
-  const industries = INDUSTRY_MAP[selfElement as keyof typeof INDUSTRY_MAP] || []
-  
+  const scores = calculateFiveElementsScore(bazi)
+  const selfElement = ELEMENT_MAP[bazi.day.tianGan] // 日主五行
+  const selfScore = scores[selfElement] // 日主得分
+
+  // 判断身强身弱：>50分就是身强，<50分就是身弱
+  const bodyStrength: '身强' | '身弱' = selfScore > 50 ? '身强' : '身弱'
+
+  // 找出得分最低的五行（通常作为补救的参考）
+  const sortedScores = Object.entries(scores).sort((a, b) => a[1] - b[1])
+  const weakestElement = sortedScores[0][0] as ElementType
+
+  // 找出得分最高的五行（代表能量最强）
+  const strongestElement = sortedScores[sortedScores.length - 1][0] as ElementType
+
+  // 职业逻辑：通常倾向于平衡，所以推荐"用神"（最弱的五行）
+  const recommendedJobs = INDUSTRY_MAP[weakestElement] || []
+
   return {
-    suggestion: `您的日主为${dayGan}（${selfElement}），建议选择与"${selfElement}"相关的职业。`,
-    industries
+    scores,
+    selfElement,
+    bodyStrength,
+    selfScore,
+    strongestElement,
+    weakestElement,
+    suggestion: `您的日主为${bazi.day.tianGan}（${selfElement}），得分为${selfScore}分，属于${bodyStrength}。目前排盘中能量最强的是${strongestElement}（${scores[strongestElement]}分），最需要补益的是${weakestElement}（${scores[weakestElement]}分）。`,
+    industries: recommendedJobs
   }
 }
 
 /**
- * 辅助函数：干支转五行
+ * 辅助函数：干支转五行（保留用于兼容）
  */
 function getFiveElement(name: string): string {
-  if ('甲乙寅卯'.includes(name)) return '木'
-  if ('丙丁巳午'.includes(name)) return '火'
-  if ('戊己辰戌丑未'.includes(name)) return '土'
-  if ('庚辛申酉'.includes(name)) return '金'
-  if ('壬癸亥子'.includes(name)) return '水'
-  return '未知'
+  return ELEMENT_MAP[name] || '未知'
 }
