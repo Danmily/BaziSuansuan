@@ -1,7 +1,14 @@
 import { useState } from 'react'
 import { Calendar, Clock, Sparkles, Briefcase } from 'lucide-react'
-import { calculateBazi, type BaziResult, getRecommendedJobs, type JobRecommendation } from '../utils/baziCalculator'
+import { calculateBazi, type BaziResult, getRecommendedJobs, type JobRecommendation, ELEMENT_MAP, ELEMENT_COLORS } from '../utils/baziCalculator'
 import DateTimePicker from './DateTimePicker'
+
+// 获取天干地支对应的颜色类名
+const getElementColor = (ganZhi: string): string => {
+  const element = ELEMENT_MAP[ganZhi]
+  if (!element) return 'text-gray-600'
+  return ELEMENT_COLORS[element].textDark
+}
 
 function BaziCalculator() {
   const [formData, setFormData] = useState({
@@ -161,11 +168,11 @@ function BaziCalculator() {
                 {/* 年柱 */}
                 <div className="text-center">
                   <div className="text-sm text-gray-600 mb-2">年柱</div>
-                  <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-lg p-4 shadow-md">
-                    <div className="text-3xl font-bold text-orange-600 mb-1">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 shadow-md">
+                    <div className={`text-3xl font-bold mb-1 ${getElementColor(baziResult.year.tianGan)}`}>
                       {baziResult.year.tianGan}
                     </div>
-                    <div className="text-3xl font-bold text-red-600">
+                    <div className={`text-3xl font-bold ${getElementColor(baziResult.year.diZhi)}`}>
                       {baziResult.year.diZhi}
                     </div>
                   </div>
@@ -174,11 +181,11 @@ function BaziCalculator() {
                 {/* 月柱 */}
                 <div className="text-center">
                   <div className="text-sm text-gray-600 mb-2">月柱</div>
-                  <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-lg p-4 shadow-md">
-                    <div className="text-3xl font-bold text-orange-600 mb-1">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 shadow-md">
+                    <div className={`text-3xl font-bold mb-1 ${getElementColor(baziResult.month.tianGan)}`}>
                       {baziResult.month.tianGan}
                     </div>
-                    <div className="text-3xl font-bold text-red-600">
+                    <div className={`text-3xl font-bold ${getElementColor(baziResult.month.diZhi)}`}>
                       {baziResult.month.diZhi}
                     </div>
                   </div>
@@ -187,11 +194,11 @@ function BaziCalculator() {
                 {/* 日柱 */}
                 <div className="text-center">
                   <div className="text-sm text-gray-600 mb-2">日柱</div>
-                  <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-lg p-4 shadow-md">
-                    <div className="text-3xl font-bold text-orange-600 mb-1">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 shadow-md">
+                    <div className={`text-3xl font-bold mb-1 ${getElementColor(baziResult.day.tianGan)}`}>
                       {baziResult.day.tianGan}
                     </div>
-                    <div className="text-3xl font-bold text-red-600">
+                    <div className={`text-3xl font-bold ${getElementColor(baziResult.day.diZhi)}`}>
                       {baziResult.day.diZhi}
                     </div>
                   </div>
@@ -200,11 +207,11 @@ function BaziCalculator() {
                 {/* 时柱 */}
                 <div className="text-center">
                   <div className="text-sm text-gray-600 mb-2">时柱</div>
-                  <div className="bg-gradient-to-br from-orange-100 to-red-100 rounded-lg p-4 shadow-md">
-                    <div className="text-3xl font-bold text-orange-600 mb-1">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg p-4 shadow-md">
+                    <div className={`text-3xl font-bold mb-1 ${getElementColor(baziResult.hour.tianGan)}`}>
                       {baziResult.hour.tianGan}
                     </div>
-                    <div className="text-3xl font-bold text-red-600">
+                    <div className={`text-3xl font-bold ${getElementColor(baziResult.hour.diZhi)}`}>
                       {baziResult.hour.diZhi}
                     </div>
                   </div>
@@ -214,11 +221,18 @@ function BaziCalculator() {
               {/* 完整八字显示 */}
               <div className="bg-gray-50 rounded-lg p-4 text-center mb-6">
                 <div className="text-lg text-gray-700 mb-2">完整八字</div>
-                <div className="text-2xl font-bold text-gray-800">
-                  {baziResult.year.tianGan}{baziResult.year.diZhi} · 
-                  {baziResult.month.tianGan}{baziResult.month.diZhi} · 
-                  {baziResult.day.tianGan}{baziResult.day.diZhi} · 
-                  {baziResult.hour.tianGan}{baziResult.hour.diZhi}
+                <div className="text-2xl font-bold">
+                  <span className={getElementColor(baziResult.year.tianGan)}>{baziResult.year.tianGan}</span>
+                  <span className={getElementColor(baziResult.year.diZhi)}>{baziResult.year.diZhi}</span>
+                  <span className="text-gray-400 mx-2">·</span>
+                  <span className={getElementColor(baziResult.month.tianGan)}>{baziResult.month.tianGan}</span>
+                  <span className={getElementColor(baziResult.month.diZhi)}>{baziResult.month.diZhi}</span>
+                  <span className="text-gray-400 mx-2">·</span>
+                  <span className={getElementColor(baziResult.day.tianGan)}>{baziResult.day.tianGan}</span>
+                  <span className={getElementColor(baziResult.day.diZhi)}>{baziResult.day.diZhi}</span>
+                  <span className="text-gray-400 mx-2">·</span>
+                  <span className={getElementColor(baziResult.hour.tianGan)}>{baziResult.hour.tianGan}</span>
+                  <span className={getElementColor(baziResult.hour.diZhi)}>{baziResult.hour.diZhi}</span>
                 </div>
               </div>
 

@@ -126,7 +126,7 @@ function calculateHourPillarImproved(dayGan: string, hour: number): { tianGan: s
 // 干支与五行的对应表
 type ElementType = '木' | '火' | '土' | '金' | '水'
 
-const ELEMENT_MAP: Record<string, ElementType> = {
+export const ELEMENT_MAP: Record<string, ElementType> = {
   '甲': '木', '乙': '木', '寅': '木', '卯': '木',
   '丙': '火', '丁': '火', '巳': '火', '午': '火',
   '戊': '土', '己': '土', '辰': '土', '戌': '土', '丑': '土', '未': '土',
@@ -134,13 +134,37 @@ const ELEMENT_MAP: Record<string, ElementType> = {
   '壬': '水', '癸': '水', '亥': '水', '子': '水'
 }
 
-// 五行特性描述
-const ELEMENT_DESCRIPTION: Record<ElementType, string> = {
-  '木': '木主仁慈、生发、创造，适合需要创意、成长性和人文关怀的工作',
-  '火': '火主热情、活跃、传播，适合需要表达、创新和快速迭代的工作',
-  '土': '土主稳定、承载、包容，适合需要耐心、责任和实际执行的工作',
-  '金': '金主收敛、规则、严谨，适合需要逻辑、系统和精准控制的工作',
-  '水': '水主流动、智慧、适应，适合需要灵活、沟通和资源整合的工作'
+// 职业发展数据库
+const VOCATIONAL_DATABASE: Record<ElementType, {
+  characteristics: string
+  industries: string[]
+  positions: string[]
+}> = {
+  '木': {
+    characteristics: '木主仁慈、生发、创造，适合需要创意、成长性和人文关怀的工作',
+    industries: ['教育培训', '文化出版', '园林绿化', '木材加工', '纺织服装', '医药健康'],
+    positions: ['教师', '编辑', '设计师', '咨询顾问', '园艺师', '中医师', '文案策划', '产品经理']
+  },
+  '火': {
+    characteristics: '火主礼貌、热情、光明，适合能源、互联网、传播、迭代快速的工作',
+    industries: ['互联网/AI', '能源电力', '餐饮娱乐', '广告传媒', '美容化工', '光学电子'],
+    positions: ['软件架构师', 'AI产品经理', '品牌推广', '创意导演', '电气工程师', '演艺人员']
+  },
+  '土': {
+    characteristics: '土主诚信、包容、厚重，适合房地产、基础设施、农牧、保障类工作',
+    industries: ['房产建筑', '农牧土产', '矿产石材', '仓储物流', '法律法条', '古玩收藏'],
+    positions: ['项目经理', '财务会计', '法务专员', '土木工程师', '仓库主管', '资深顾问']
+  },
+  '金': {
+    characteristics: '金主正义、硬朗、精密，适合金融、法律、规则、制造硬核技术工作',
+    industries: ['金融投资', '精密制造', '珠宝饰品', '汽车工程', '武职司法', '五金机电'],
+    positions: ['金融分析师', '法官/律师', '机械设计', '安全工程师', '系统架构师', '外科医生']
+  },
+  '水': {
+    characteristics: '水主智慧、灵动、流动，适合贸易、物流、策划、需要多变应对的工作',
+    industries: ['国际贸易', '现代物流', '旅游观光', '水利水产', '新闻出版', '心理研究'],
+    positions: ['市场策划', '心理医生', '外贸主管', '高级导游', '调查记者', '水产专家']
+  }
 }
 
 // 五行颜色映射
@@ -200,23 +224,6 @@ export const ELEMENT_COLORS: Record<ElementType, {
   }
 }
 
-// 行业领域分类（根据五行补弱原则）
-const INDUSTRY_MAP: Record<ElementType, string[]> = {
-  '木': ['教育培训', '文化出版', '园林绿化', '木材加工', '纺织服装', '医药健康'],
-  '火': ['互联网科技', '能源电力', '餐饮娱乐', '广告传媒', '演艺事业', '美容美发'],
-  '土': ['房地产', '建筑工程', '农业畜牧', '仓储物流', '石材加工', '防水材料'],
-  '金': ['金融投资', '精密制造', '法律司法', '汽车工业', '五金器材', '珠宝鉴定'],
-  '水': ['国际贸易', '冷链物流', '航海旅游', '水利工程', '传播媒体', '咨询服务']
-}
-
-// 职位类型分类
-const JOB_POSITION_MAP: Record<ElementType, string[]> = {
-  '木': ['教师', '设计师', '园艺师', '文案策划', '编辑', '咨询顾问', '中医师', '产品经理'],
-  '火': ['产品经理', '营销专员', '运营经理', '主播', '演员', '广告创意', '电气工程师', '网络工程师'],
-  '土': ['建筑工程师', '项目经理', '农业技术员', '物流管理', '质检员', '采购员', '房产销售', '土地评估'],
-  '金': ['金融分析师', '软件架构师', '律师', '机械工程师', '审计员', '质量管理', '系统分析师', '数据分析师'],
-  '水': ['贸易专员', '物流经理', '市场营销', '媒体编辑', '咨询顾问', '销售经理', '导游', '人力资源']
-}
 
 export interface FiveElementsScore {
   木: number
@@ -294,11 +301,16 @@ export function getRecommendedJobs(bazi: BaziResult): JobRecommendation {
   // 找出得分最高的五行（代表能量最强）
   const strongestElement = sortedScores[sortedScores.length - 1][0] as ElementType
 
-  // 职业逻辑：通常倾向于平衡，所以推荐"用神"（最弱的五行）
-  // 但显示日主五行的特性描述
-  const recommendedIndustries = INDUSTRY_MAP[weakestElement] || []
-  const recommendedPositions = JOB_POSITION_MAP[weakestElement] || []
-  const selfElementDescription = ELEMENT_DESCRIPTION[selfElement] || ''
+  // 根据日主五行获取对应的职业发展建议
+  const vocationalData = VOCATIONAL_DATABASE[selfElement] || {
+    characteristics: '',
+    industries: [],
+    positions: []
+  }
+  
+  const recommendedIndustries = vocationalData.industries || []
+  const recommendedPositions = vocationalData.positions || []
+  const selfElementDescription = vocationalData.characteristics || ''
 
   return {
     scores,
