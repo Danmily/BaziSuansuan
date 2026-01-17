@@ -29,21 +29,42 @@ const WheelColumn = ({
     if (scrollRef.current && items.length > 0) {
       const index = items.indexOf(value)
       if (index >= 0) {
-        scrollRef.current.scrollTop = index * itemHeight
+        const selectionLineTop = 191
+        const topPadding = 150
+        // 让item顶部对齐到选中线
+        const targetScrollTop = topPadding + index * itemHeight - selectionLineTop
+        const maxScrollTop = scrollRef.current.scrollHeight - scrollRef.current.clientHeight
+        scrollRef.current.scrollTop = Math.max(0, Math.min(maxScrollTop, targetScrollTop))
       }
     }
-  }, [value, items])
+  }, [value, items, itemHeight])
 
   // 核心：处理吸附对齐
   const handleSnap = () => {
     if (!scrollRef.current) return
     const scrollTop = scrollRef.current.scrollTop
-    const index = Math.round(scrollTop / itemHeight)
+    const selectionLineTop = 191 // 选中线的位置
+    const topPadding = 150
+    
+    // 计算当前滚动位置对应的item索引
+    // item从topPadding位置开始，要让item顶部对齐到选中线
+    // 需要计算：scrollTop + item顶部位置 = selectionLineTop
+    // item顶部位置 = topPadding + index * itemHeight - scrollTop
+    // 所以：topPadding + index * itemHeight - scrollTop = selectionLineTop
+    // 解得：index = (scrollTop + selectionLineTop - topPadding) / itemHeight
+    const index = Math.round((scrollTop + selectionLineTop - topPadding) / itemHeight)
     const clampedIndex = Math.max(0, Math.min(items.length - 1, index))
     const targetValue = items[clampedIndex]
     
+    // 目标滚动位置：让item顶部对齐到选中线
+    const targetScrollTop = topPadding + clampedIndex * itemHeight - selectionLineTop
+    
+    // 确保滚动位置在有效范围内
+    const maxScrollTop = scrollRef.current.scrollHeight - scrollRef.current.clientHeight
+    const finalScrollTop = Math.max(0, Math.min(maxScrollTop, targetScrollTop))
+    
     scrollRef.current.scrollTo({
-      top: clampedIndex * itemHeight,
+      top: finalScrollTop,
       behavior: 'smooth'
     })
     
@@ -89,6 +110,8 @@ const WheelColumn = ({
       
       // 如果拖动速度足够快，添加轻微的惯性滚动
       if (Math.abs(velocity) > 5) {
+        const selectionLineTop = 191
+        const topPadding = 150
         const inertiaMultiplier = 3
         const inertiaDistance = velocity * inertiaMultiplier
         const maxInertia = itemHeight * 3
@@ -96,12 +119,16 @@ const WheelColumn = ({
         
         const currentScrollTop = scrollRef.current.scrollTop
         const targetScrollTop = currentScrollTop - limitedInertia
-        const targetIndex = Math.round(targetScrollTop / itemHeight)
-        const clampedIndex = Math.max(0, Math.min(items.length - 1, targetIndex))
-        const finalScrollTop = clampedIndex * itemHeight
+        // 计算目标索引
+        const index = Math.round((targetScrollTop + selectionLineTop - topPadding) / itemHeight)
+        const clampedIndex = Math.max(0, Math.min(items.length - 1, index))
+        const finalScrollTop = topPadding + clampedIndex * itemHeight - selectionLineTop
+        
+        const maxScrollTop = scrollRef.current.scrollHeight - scrollRef.current.clientHeight
+        const limitedScrollTop = Math.max(0, Math.min(maxScrollTop, finalScrollTop))
         
         scrollRef.current.scrollTo({
-          top: finalScrollTop,
+          top: limitedScrollTop,
           behavior: 'smooth'
         })
         
@@ -126,7 +153,10 @@ const WheelColumn = ({
     if (!scrollRef.current || isDragging.current) return
     
     const scrollTop = scrollRef.current.scrollTop
-    const index = Math.round(scrollTop / itemHeight)
+    const selectionLineTop = 191
+    const topPadding = 150
+    // 计算当前滚动位置对应的item索引
+    const index = Math.round((scrollTop + selectionLineTop - topPadding) / itemHeight)
     const clampedIndex = Math.max(0, Math.min(items.length - 1, index))
     const targetValue = items[clampedIndex]
     
@@ -170,7 +200,7 @@ const WheelColumn = ({
           scrollBehavior: 'auto'
         }}
       >
-        <div className="py-[150px]">
+        <div className="pt-[150px] pb-[250px]">
           {items.map((item) => (
             <div
               key={item}

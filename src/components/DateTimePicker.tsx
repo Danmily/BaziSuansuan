@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import WheelColumn from './WheelColumn'
 
 interface DateTimePickerProps {
   isOpen: boolean
@@ -73,8 +72,6 @@ export default function DateTimePicker({
     }
   }, [selectedYear, selectedMonth, daysInMonth, selectedDay])
   
-
-  
   // 生成小时列表（0-23）
   const hours = Array.from({ length: 24 }, (_, i) => i)
   
@@ -113,82 +110,96 @@ export default function DateTimePicker({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center z-50 md:items-center">
-      <div className="bg-white rounded-t-3xl md:rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl">
         {/* 头部 */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800">选择日期时间</h3>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <X className="w-5 h-5 text-gray-600" />
           </button>
-          <h3 className="text-lg font-semibold text-gray-800">选择日期时间</h3>
+        </div>
+
+        {/* 下拉选择区域 */}
+        <div className="p-6 space-y-4">
+          {/* 日期选择 */}
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">年</label>
+              <select
+                value={selectedYear}
+                onChange={(e) => handleYearChange(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+              >
+                {years.map(year => (
+                  <option key={year} value={year}>{year}年</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">月</label>
+              <select
+                value={selectedMonth}
+                onChange={(e) => handleMonthChange(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+              >
+                {months.map(month => (
+                  <option key={month} value={month}>{formatNumber(month)}月</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">日</label>
+              <select
+                value={selectedDay}
+                onChange={(e) => setSelectedDay(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+              >
+                {days.map(day => (
+                  <option key={day} value={day}>{formatNumber(day)}日</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* 时间选择 */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">时</label>
+              <select
+                value={selectedHour}
+                onChange={(e) => setSelectedHour(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+              >
+                {hours.map(hour => (
+                  <option key={hour} value={hour}>{formatNumber(hour)}时</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">分</label>
+              <select
+                value={selectedMinute}
+                onChange={(e) => setSelectedMinute(Number(e.target.value))}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent appearance-none bg-white cursor-pointer"
+              >
+                {minutes.map(minute => (
+                  <option key={minute} value={minute}>{formatNumber(minute)}分</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* 确认按钮 */}
           <button
             onClick={handleConfirm}
-            className="px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all font-medium"
+            className="w-full mt-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg hover:from-orange-600 hover:to-red-600 transition-all font-medium"
           >
             确定
           </button>
-        </div>
-
-        {/* 滚轮选择区域 */}
-        <div className="flex-1 flex flex-col relative" style={{ height: '400px', minHeight: '400px' }}>
-          <div className="flex flex-1 overflow-hidden relative">
-            {/* 选中指示线 - 横跨所有列，定位在滚轮区域的中间位置 */}
-            <div 
-              className="absolute left-0 right-0 h-[50px] border-t-2 border-b-2 border-orange-500 pointer-events-none z-20" 
-              style={{ 
-                top: '191px'
-              }} 
-            />
-            
-            {/* 使用独立的 WheelColumn 组件 */}
-            <WheelColumn
-              label="年"
-              items={years}
-              value={selectedYear}
-              onChange={handleYearChange}
-              scrollMultiplier={8}
-              formatNumber={(num) => String(num)}
-            />
-            
-            <WheelColumn
-              label="月"
-              items={months}
-              value={selectedMonth}
-              onChange={handleMonthChange}
-              scrollMultiplier={4}
-              formatNumber={formatNumber}
-            />
-            
-            <WheelColumn
-              label="日"
-              items={days}
-              value={selectedDay}
-              onChange={setSelectedDay}
-              scrollMultiplier={5}
-              formatNumber={formatNumber}
-            />
-            
-            <WheelColumn
-              label="时"
-              items={hours}
-              value={selectedHour}
-              onChange={setSelectedHour}
-              scrollMultiplier={5}
-              formatNumber={formatNumber}
-            />
-            
-            <WheelColumn
-              label="分"
-              items={minutes}
-              value={selectedMinute}
-              onChange={setSelectedMinute}
-              scrollMultiplier={4}
-              formatNumber={formatNumber}
-            />
-          </div>
         </div>
       </div>
     </div>

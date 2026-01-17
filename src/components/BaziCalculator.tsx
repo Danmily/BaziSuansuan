@@ -1,11 +1,20 @@
 import { useState } from 'react'
-import { Calendar, Clock, Sparkles } from 'lucide-react'
-import { calculateBazi, type BaziResult, getRecommendedJobs, type JobRecommendation } from '../utils/baziCalculator'
+import { Calendar, Clock, Sparkles, Key, Briefcase } from 'lucide-react'
+import { calculateBazi, type BaziResult, getRecommendedJobs, type JobRecommendation, ELEMENT_MAP, ELEMENT_COLORS } from '../utils/baziCalculator'
 import { calculateLifeKline, type LifeKlineResult } from '../utils/lifeklineCalculator'
+import { getAIAnalysisWithRetry } from '../utils/aiAnalysisService'
 import DateTimePicker from './DateTimePicker'
 import BaziResultLayout from './BaziResultLayout'
+import ApiKeySettings from './ApiKeySettings'
 
 function BaziCalculator() {
+  // 获取天干地支对应的颜色类名
+  const getElementColor = (ganZhi: string): string => {
+    const element = ELEMENT_MAP[ganZhi]
+    if (!element) return 'text-gray-600'
+    return ELEMENT_COLORS[element].textDark
+  }
+
   const [formData, setFormData] = useState({
     gender: '男',
     birthDateTime: ''
@@ -13,8 +22,11 @@ function BaziCalculator() {
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null)
   const [jobRecommendation, setJobRecommendation] = useState<JobRecommendation | null>(null)
   const [lifeKline, setLifeKline] = useState<LifeKlineResult | null>(null)
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isPickerOpen, setIsPickerOpen] = useState(false)
   const [showResult, setShowResult] = useState(false)
+  const [showApiKeySettings, setShowApiKeySettings] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -39,15 +51,61 @@ function BaziCalculator() {
       setJobRecommendation(recommendation)
       
       // 计算人生K线
-      const [year] = date.split('-').map(Number)
-      const klineData = calculateLifeKline(result, year, formData.gender as '男' | '女')
+      const klineData = calculateLifeKline(result, date, time, formData.gender as '男' | '女')
       setLifeKline(klineData)
       
       // 切换到结果页面
       setShowResult(true)
+      
+      // 异步获取AI分析（不阻塞页面显示）
+      setIsAnalyzing(true)
+      getAIAnalysisWithRetry({
+        bazi: {
+          year: `${result.year.tianGan}${result.year.diZhi}`,
+          month: `${result.month.tianGan}${result.month.diZhi}`,
+          day: `${result.day.tianGan}${result.day.diZhi}`,
+          hour: `${result.hour.tianGan}${result.hour.diZhi}`
+        },
+        gender: formData.gender as '男' | '女',
+        birthDateTime: formData.birthDateTime,
+        jobRecommendation: {
+          selfElement: recommendation.selfElement,
+          bodyStrength: recommendation.bodyStrength,
+          scores: recommendation.scores as unknown as Record<string, number>,
+          industries: recommendation.industries,
+          positions: recommendation.positions
+        },
+        lifeKline: {
+          peakAge: klineData.peakAge,
+          dayunInfo: {
+            currentDayun: klineData.dayunInfo.currentDayun,
+            luckTrend: klineData.dayunInfo.luckTrend,
+            startAgeDetail: klineData.dayunInfo.startAgeDetail,
+            direction: klineData.dayunInfo.direction,
+            dayunList: klineData.dayunInfo.dayunList.map(d => ({
+              tianGan: d.tianGan,
+              diZhi: d.diZhi,
+              startAge: d.startAge,
+              endAge: d.endAge,
+              ageRange: d.ageRange
+            }))
+          }
+        }
+      })
+        .then(response => {
+          setAiAnalysis(response.analysis)
+        })
+        .catch(error => {
+          console.error('AI分析失败:', error)
+          setAiAnalysis(null)
+        })
+        .finally(() => {
+          setIsAnalyzing(false)
+        })
     } else {
       setJobRecommendation(null)
       setLifeKline(null)
+      setAiAnalysis(null)
     }
   }
 
@@ -89,6 +147,54 @@ function BaziCalculator() {
     return time || ''
   }
 
+  // 重新请求AI分析的函数
+  const retryAIAnalysis = async () => {
+    if (!baziResult || !jobRecommendation || !lifeKline) return
+    
+    setIsAnalyzing(true)
+    try {
+      const response = await getAIAnalysisWithRetry({
+        bazi: {
+          year: `${baziResult.year.tianGan}${baziResult.year.diZhi}`,
+          month: `${baziResult.month.tianGan}${baziResult.month.diZhi}`,
+          day: `${baziResult.day.tianGan}${baziResult.day.diZhi}`,
+          hour: `${baziResult.hour.tianGan}${baziResult.hour.diZhi}`
+        },
+        gender: formData.gender as '男' | '女',
+        birthDateTime: formData.birthDateTime,
+        jobRecommendation: {
+          selfElement: jobRecommendation.selfElement,
+          bodyStrength: jobRecommendation.bodyStrength,
+          scores: jobRecommendation.scores as unknown as Record<string, number>,
+          industries: jobRecommendation.industries,
+          positions: jobRecommendation.positions
+        },
+        lifeKline: {
+          peakAge: lifeKline.peakAge,
+          dayunInfo: {
+            currentDayun: lifeKline.dayunInfo.currentDayun,
+            luckTrend: lifeKline.dayunInfo.luckTrend,
+            startAgeDetail: lifeKline.dayunInfo.startAgeDetail,
+            direction: lifeKline.dayunInfo.direction,
+            dayunList: lifeKline.dayunInfo.dayunList.map(d => ({
+              tianGan: d.tianGan,
+              diZhi: d.diZhi,
+              startAge: d.startAge,
+              endAge: d.endAge,
+              ageRange: d.ageRange
+            }))
+          }
+        }
+      })
+      setAiAnalysis(response.analysis)
+    } catch (error) {
+      console.error('AI分析失败:', error)
+      setAiAnalysis(null)
+    } finally {
+      setIsAnalyzing(false)
+    }
+  }
+
   // 如果已显示结果，切换到结果布局
   if (showResult && baziResult && jobRecommendation && lifeKline) {
     return (
@@ -96,8 +202,11 @@ function BaziCalculator() {
         baziResult={baziResult}
         jobRecommendation={jobRecommendation}
         lifeKline={lifeKline}
+        aiAnalysis={aiAnalysis}
+        isAnalyzing={isAnalyzing}
         birthDateTime={formData.birthDateTime}
         gender={formData.gender as '男' | '女'}
+        onRetryAIAnalysis={retryAIAnalysis}
       />
     )
   }
@@ -105,21 +214,43 @@ function BaziCalculator() {
   // 否则显示输入表单
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-orange-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-3xl">
         {/* 标题区域 */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent flex items-center justify-center gap-2">
-            <Sparkles className="w-6 h-6 text-orange-500" />
-            八字排盘・职业分析系统
-            <Sparkles className="w-6 h-6 text-red-500" />
-          </h1>
-          <p className="text-gray-600 text-sm md:text-base">
-            精准计算·真太阳时·职业规划·人生指导
+        <div className="text-center mb-12">
+          <div className="relative mb-4">
+            <h1 className="text-5xl md:text-6xl font-bold text-orange-600 mb-4">
+              3秒生成你的人生K线图
+            </h1>
+            <div className="absolute right-0 top-0">
+              <button
+                onClick={() => setShowApiKeySettings(true)}
+                className="p-2 text-gray-600 hover:text-orange-600 hover:bg-white rounded-lg transition-all"
+                title="设置 API Key"
+              >
+                <Key className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+          <p className="text-lg md:text-xl text-gray-700 mb-8">
+            输入生日，马上生成专属人生K线及可下载的命理报告
           </p>
+
+          {/* 特性标签 */}
+          <div className="flex flex-wrap justify-center gap-3 mb-10">
+            <span className="px-4 py-2 bg-white/80 border-2 border-orange-300 rounded-full text-sm font-medium text-gray-800 shadow-sm">
+              无需注册
+            </span>
+            <span className="px-4 py-2 bg-white/80 border-2 border-orange-300 rounded-full text-sm font-medium text-gray-800 shadow-sm">
+              无需排队
+            </span>
+            <span className="px-4 py-2 bg-white/80 border-2 border-orange-300 rounded-full text-sm font-medium text-gray-800 shadow-sm">
+              支持4大AI模型
+            </span>
+          </div>
         </div>
 
         {/* 表单卡片 */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+        <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-10">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* 性别字段 */}
             <div>
@@ -172,11 +303,28 @@ function BaziCalculator() {
             {/* 提交按钮 */}
             <button
               type="submit"
-              className="w-full py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="w-full py-5 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-lg font-bold rounded-xl hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-all shadow-xl hover:shadow-2xl transform hover:-translate-y-1 flex items-center justify-center gap-2"
             >
-              开始分析
+              <Sparkles className="w-5 h-5" />
+              点击生成我的人生K线
             </button>
           </form>
+
+          {/* 评分信息 */}
+          <div className="mt-8 pt-6 border-t border-gray-200 flex items-center justify-center gap-2 text-gray-600">
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <svg key={i} className="w-5 h-5 text-orange-500 fill-current" viewBox="0 0 20 20">
+                  <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                </svg>
+              ))}
+            </div>
+            <span className="text-sm font-semibold">4.9</span>
+            <span className="text-sm">评分</span>
+            <span className="text-sm mx-1">·</span>
+            <span className="text-sm font-semibold">100+</span>
+            <span className="text-sm">用户</span>
+          </div>
 
           {/* 临时结果显示（在新布局之前） */}
           {baziResult && !showResult && (
@@ -379,6 +527,19 @@ function BaziCalculator() {
         initialDate={getCurrentDate()}
         initialTime={getCurrentTime()}
       />
+
+      {/* API Key 设置 */}
+      {showApiKeySettings && (
+        <ApiKeySettings 
+          onClose={() => setShowApiKeySettings(false)}
+          onSaveSuccess={() => {
+            // API Key保存成功后，如果已经有结果页面，则重新请求AI分析
+            if (showResult && baziResult && jobRecommendation && lifeKline && !aiAnalysis) {
+              retryAIAnalysis()
+            }
+          }}
+        />
+      )}
     </div>
   )
 }
